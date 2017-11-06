@@ -18,13 +18,13 @@ class ParseShotOn(HTMLParser):
     def split_data_for_row(self, away_team_id):
         self.data_array.pop(0)
         for index, item in enumerate(self.data_array):
-            if item == 'value' and self.data_array[index + 2] == 'blocked':
+            if item == 'value' and self.data_array[index + 2] == 'blocked' and self.data_array[index + 15] != 'player1':
                 if int(self.data_array[index + 15]) == away_team_id:
                     self.split_data['away_team_shots_blocked'] += 1
                 else:
                     self.split_data['home_team_shots_blocked'] += 1
 
-            if item == 'value' and self.data_array[index + 2] == 'shoton':
+            if item == 'value' and self.data_array[index + 2] == 'shoton' and self.data_array[index + 15] != 'player1':
                 if int(self.data_array[index + 15]) == away_team_id:
                     self.split_data['away_team_shots_on_target'] += 1
                 else:

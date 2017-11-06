@@ -44,13 +44,43 @@ class Analysis(object):
         self.processed_dataframe['home_skills_total'] = pd.Series(home_team_skills).values
         self.processed_dataframe['away_skills_total'] = pd.Series(away_team_skills).values
      
-    #def addPlayerHeightTotals(self):
+    def addPlayerHeightTotals(self):
+        away_team_height = []
+        home_team_height = []
+        for index, row in self.raw_dataframe.iterrows():
+            query = "select height from Player where player_api_id in (?,?,?,?,?,?,?,?,?,?,?)"
+            df = pd.read_sql_query(query, self.conn, params=(row['away_player_1'], row['away_player_2'], row['away_player_3'], row['away_player_4'], row['away_player_5'], row['away_player_6'],
+            row['away_player_7'], row['away_player_8'], row['away_player_9'], row['away_player_10'], row['away_player_11']))
+            away_team_height.append(df['height'].sum())
 
-    def parse_shoton_tags(df, away_team_id):
-        parser = ParseShotOn()
-        parser.feed(df['shoton'][0])
-        parser.split_data_for_row(away_team_id)
-        print(parser.get_split_data())
+            query = "select height from Player where player_api_id in (?,?,?,?,?,?,?,?,?,?,?)"
+            df = pd.read_sql_query(query, self.conn, params=(row['home_player_1'], row['home_player_2'], row['home_player_3'], row['home_player_4'], row['home_player_5'], row['home_player_6'],
+            row['home_player_7'], row['home_player_8'], row['home_player_9'], row['home_player_10'], row['home_player_11']))
+            home_team_height.append(df['height'].sum())
+
+        self.processed_dataframe['home_height_total'] = pd.Series(home_team_height).values
+        self.processed_dataframe['away_height_total'] = pd.Series(away_team_height).values
+
+    def parse_shoton_tags(self):
+        away_team_shots_blocked = []
+        home_team_shots_blocked = []
+        away_team_shots_on_target = []
+        home_team_shots_on_target = []
+        for index, row in self.raw_dataframe.iterrows():
+            parser = ParseShotOn()
+            parser.feed(row['shoton'])
+            parser.split_data_for_row(self.team_id)
+
+            data = parser.get_split_data()
+            away_team_shots_blocked.append(data['away_team_shots_blocked'])
+            home_team_shots_blocked.append(data['home_team_shots_blocked'])
+            away_team_shots_on_target.append(data['away_team_shots_on_target'])
+            home_team_shots_on_target.append(data['home_team_shots_on_target'])
+
+        self.processed_dataframe['away_team_shots_blocked'] = pd.Series(away_team_shots_blocked).values
+        self.processed_dataframe['home_team_shots_blocked'] = pd.Series(home_team_shots_blocked).values
+        self.processed_dataframe['away_team_shots_on_target'] = pd.Series(away_team_shots_on_target).values
+        self.processed_dataframe['home_team_shots_on_target'] = pd.Series(home_team_shots_on_target).values
 
     # Getters
     def get_raw_dataframe(self):
