@@ -2,9 +2,6 @@
 import pandas as pd
 from IPython.display import display
 from analysis import Analysis
-import sys
-
-sys.dont_write_bytecode = True
 
 #predict Arsenal away wins
 #pick out feature most important to predicting away wins
@@ -12,22 +9,27 @@ league_id=1729
 away_team_api_id=9825
 sqlite_file = '/Users/schumanzhang/Desktop/machine_learning_projects/soccer_dataset/raw_data/database.sqlite'
 
-analysis = Analysis(league_id, away_team_api_id, sqlite_file)
-analysis.retrieve_raw_data()
+try:
+    processed_data = pd.read_csv('dataframe.csv')
+except IOError:
+    analysis = Analysis(league_id, away_team_api_id, sqlite_file)
+    raw_data = analysis.retrieve_raw_data()
+    basic_info_list = analysis.basic_data_info()
+    print(basic_info_list)
 
-raw_data = analysis.get_raw_dataframe()
-print "raw features: {}".format(raw_data.columns.values)
+    analysis.addInitAttributes()
+    analysis.addPlayerSkillTotals()
+    analysis.addPlayerHeightTotals()
 
-basic_info_list = analysis.basic_data_info()
+    analysis.parse_selected_tags('shoton', ['away_shoton', 'home_shoton'])
+    analysis.parse_selected_tags('shotoff', ['away_shotff', 'home_shotoff'])
+    analysis.parse_selected_tags('foulcommit', ['away_fouls', 'home_fouls'])
+    analysis.parse_selected_tags('card', ['away_cards', 'home_cards'])
+    analysis.parse_selected_tags('cross', ['away_crosses', 'home_crosses'])
+    analysis.parse_selected_tags('corner', ['away_corners', 'home_corners'])
+    analysis.parse_selected_tags('possession', ['away_possession', 'home_possession'])
+    analysis.addTargetVariable()
+    processed_data = analysis.get_processed_dataframe()
+    processed_data.to_csv('dataframe.csv')
 
-print "total records: {}".format(basic_info_list[0])
-print "total away team wins: {}".format(basic_info_list[1])
-print "total draws: {}".format(basic_info_list[2])
-print "total home team wins: {}".format(basic_info_list[3])
-
-analysis.addInitAttributes()
-analysis.addPlayerSkillTotals()
-analysis.addPlayerHeightTotals()
-analysis.parse_shoton_tags()
-
-print(analysis.get_processed_dataframe().head())
+print(processed_data.head())

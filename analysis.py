@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 import numpy as np
-from helpers import ParseShotOn
+from helpers import ParseHTMLTags
 
 class Analysis(object):
 
@@ -61,26 +61,36 @@ class Analysis(object):
         self.processed_dataframe['home_height_total'] = pd.Series(home_team_height).values
         self.processed_dataframe['away_height_total'] = pd.Series(away_team_height).values
 
-    def parse_shoton_tags(self):
-        away_team_shots_blocked = []
-        home_team_shots_blocked = []
-        away_team_shots_on_target = []
-        home_team_shots_on_target = []
+    def parse_selected_tags(self, selected, name):
+        away_team_stat = []
+        home_team_stat = []
         for index, row in self.raw_dataframe.iterrows():
-            parser = ParseShotOn()
-            parser.feed(row['shoton'])
-            parser.split_data_for_row(self.team_id)
+            parser = ParseHTMLTags()
+            parser.feed(row[selected])
+
+            if selected != 'possession':
+                parser.split_data_for_row(self.team_id)
+            else:
+                parser.split_data_for_row2()
 
             data = parser.get_split_data()
-            away_team_shots_blocked.append(data['away_team_shots_blocked'])
-            home_team_shots_blocked.append(data['home_team_shots_blocked'])
-            away_team_shots_on_target.append(data['away_team_shots_on_target'])
-            home_team_shots_on_target.append(data['home_team_shots_on_target'])
+            away_team_stat.append(data[0])
+            home_team_stat.append(data[1])
 
-        self.processed_dataframe['away_team_shots_blocked'] = pd.Series(away_team_shots_blocked).values
-        self.processed_dataframe['home_team_shots_blocked'] = pd.Series(home_team_shots_blocked).values
-        self.processed_dataframe['away_team_shots_on_target'] = pd.Series(away_team_shots_on_target).values
-        self.processed_dataframe['home_team_shots_on_target'] = pd.Series(home_team_shots_on_target).values
+        self.processed_dataframe[name[0]] = pd.Series(away_team_stat).values
+        self.processed_dataframe[name[1]] = pd.Series(home_team_stat).values
+
+    def addTargetVariable(self):
+        result = []
+        for index, row in self.raw_dataframe.iterrows():
+            if row['away_team_goal'] > row['home_team_goal']:
+                result.append('A')
+            elif row['away_team_goal'] < row['home_team_goal']:
+                result.append('H')
+            else:
+                result.append('D')
+
+        self.processed_dataframe['result'] = pd.Series(result).values
 
     # Getters
     def get_raw_dataframe(self):
