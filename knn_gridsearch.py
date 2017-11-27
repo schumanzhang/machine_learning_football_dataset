@@ -3,22 +3,20 @@ from sklearn.metrics import accuracy_score, fbeta_score, precision_score, recall
 from sklearn.model_selection import GridSearchCV
 from time import time
 
-class SVMModel(TrainModel):
+class KNNModel(TrainModel):
 
-    def __init__(self, sample_size, learner, X_train, y_train, X_test, y_test, Cs, gammas, kernel):
+    def __init__(self, sample_size, learner, X_train, y_train, X_test, y_test, k):
         #TrainModel.__init__(self, sample_size, learner, X_train, y_train, X_test, y_test)
-        super(SVMModel, self).__init__(sample_size, learner, X_train, y_train, X_test, y_test)
-        self.Cs = Cs
-        self.gammas = gammas
-        self.kernel = kernel
+        super(KNNModel, self).__init__(sample_size, learner, X_train, y_train, X_test, y_test)
+        self.k = k
         self.best_clf = learner
 
     def grid_search(self):
-        parameters = [{'kernel': [self.kernel], 'C': self.Cs, 'gamma': self.gammas}]
+        parameters = {'n_neighbors': self.k}
 
         start = time()
         grid_obj = GridSearchCV(self.learner, parameters)
-        grid_fit = grid_obj.fit(self.X_train, self.y_train)
+        grid_fit = grid_obj.fit(self.X_train, self.y_train.values.ravel())
         end = time()
         self.results['train_time'] = end - start
 
@@ -41,5 +39,3 @@ class SVMModel(TrainModel):
 
         self.results['recall_train'] = recall_score(self.y_train, predictions_train, average='macro')
         self.results['recall_test'] = recall_score(self.y_test, predictions_test, average='macro')
-
-

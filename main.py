@@ -1,9 +1,14 @@
 #European soccer dataset & supervised learning
 import pandas as pd
+import numpy as np
 from IPython.display import display
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+
+from train_model import TrainModel
+from knn_gridsearch import KNNModel
 
 from analysis import Analysis
 
@@ -40,7 +45,10 @@ except IOError:
 
 labels = processed_data.loc[:,['result']]
 processed_data.drop(['result'], axis=1, inplace=True)
-labels_final = pd.get_dummies(labels)
+
+le = LabelEncoder()
+le.fit(np.unique(labels.values))
+labels_final = labels.apply(le.transform)
 
 scaler = MinMaxScaler()
 numerical = ['home_skills_total', 'away_skills_total', 'home_height_total', 'away_height_total', 'away_shoton',
@@ -51,16 +59,25 @@ numerical = ['home_skills_total', 'away_skills_total', 'home_height_total', 'awa
 features_final = pd.DataFrame(data = processed_data)
 features_final[numerical] = scaler.fit_transform(processed_data[numerical])
 
-#print(labels_final.head())
-#print(features_final.head())
-
 #split into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(features_final, labels_final, test_size=0.2, random_state=0) 
 
 #Naive Bayes
+from sklearn.naive_bayes import GaussianNB
+naive_bayes_learner = GaussianNB()
+naive_bayes_model = TrainModel(X_train.shape[0], naive_bayes_learner, X_train, y_train, X_test, y_test)
+naive_bayes_model.train_predict()
+print(naive_bayes_model.get_results())
+
+#KNN
+from sklearn.neighbors import KNeighborsClassifier
+knn_learner = KNeighborsClassifier()
+k = [3, 4, 5]
+knn_model = KNNModel(X_train.shape[0], knn_learner, X_train, y_train, X_test, y_test, k)
+knn_model.grid_search()
+print(knn_model.get_results())
 
 #SVM
-#KNN
 #stochastic gradient descent classfier
 #random_forest_classifier
 
